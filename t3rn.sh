@@ -1,7 +1,9 @@
 #!/bin/bash
 check_and_create_folder() {
     local folder_name="$1"
-    if [ ! -d "$folder_name" ]; then
+    if [ "$(basename "$PWD")" = "$folder_name" ]; then
+        echo "Sudah berada di dalam folder '$folder_name'."
+    elif [ ! -d "$folder_name" ]; then
         echo "Folder '$folder_name' tidak ditemukan. Membuat folder..."
         mkdir -p "$folder_name"
     else
