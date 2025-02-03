@@ -9,3 +9,4 @@ tar -xzf "$filename"
 rm "$filename"
 
 echo "Update success!"
+echo "Enter ./t3rn.sh to start the executor!"
