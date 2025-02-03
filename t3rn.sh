@@ -56,7 +56,7 @@ RPC_ENDPOINTS_BLSS=${RPC_ENDPOINTS_BLSS:-""}
 read -p "Masukkan RPC_ENDPOINTS_OPSP: " RPC_ENDPOINTS_OPSP
 RPC_ENDPOINTS_OPSP=${RPC_ENDPOINTS_OPSP:-""}
 
-read -p "Masukkan RPC_ENDPOINTS_L1RN [e.g https://brn.rpc.caldera.xyz/]: " RPC_ENDPOINTS_L1RN
+read -p "Masukkan RPC_ENDPOINTS_L1RN [e.g https://brn.rpc.caldera.xyz/ or https://brn.calderarpc.com/http]: " RPC_ENDPOINTS_L1RN
 RPC_ENDPOINTS_L1RN=${RPC_ENDPOINTS_L1RN:-'https://brn.rpc.caldera.xyz/'}
 
 export NODE_ENV
