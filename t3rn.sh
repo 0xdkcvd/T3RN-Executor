@@ -16,8 +16,8 @@ check_and_create_folder "t3rn"
 cd t3rn || { echo "Gagal berpindah ke folder t3rn"; exit 1; }
 
 # Input variabel
-read -p "Masukkan NODE_ENV [testnet]: " NODE_ENV
-NODE_ENV=${NODE_ENV:-testnet}
+read -p "Masukkan ENVIRONMENT [testnet]: " ENVIRONMENT
+ENVIRONMENT=${ENVIRONMENT:-testnet}
 
 read -p "Masukkan LOG_LEVEL [debug]: " LOG_LEVEL
 LOG_LEVEL=${LOG_LEVEL:-debug}
@@ -61,7 +61,7 @@ RPC_ENDPOINTS_OPSP=${RPC_ENDPOINTS_OPSP:-""}
 read -p "Masukkan RPC_ENDPOINTS_L1RN [e.g https://brn.rpc.caldera.xyz/ or https://brn.calderarpc.com/http]: " RPC_ENDPOINTS_L1RN
 RPC_ENDPOINTS_L1RN=${RPC_ENDPOINTS_L1RN:-'https://brn.rpc.caldera.xyz/'}
 
-export NODE_ENV
+export ENVIRONMENT
 export LOG_LEVEL
 export LOG_PRETTY
 export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API
@@ -78,7 +78,7 @@ export RPC_ENDPOINTS_OPSP
 export RPC_ENDPOINTS_L1RN
 
 echo "Variabel lingkungan telah diatur:"
-printenv | grep -E 'NODE_ENV|LOG_LEVEL|LOG_PRETTY|EXECUTOR|PRIVATE_KEY_LOCAL|ENABLED_NETWORKS|RPC_ENDPOINTS'
+printenv | grep -E 'ENVIRONMENT|LOG_LEVEL|LOG_PRETTY|EXECUTOR|PRIVATE_KEY_LOCAL|ENABLED_NETWORKS|RPC_ENDPOINTS'
 
 # Menjalankan executor
 echo "Menjalankan executor..."
