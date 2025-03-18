@@ -12,7 +12,7 @@ ask_with_default() {
 check_and_create_folder() {
     local folder_name="$1"
     if [ "$(basename "$PWD")" = "$folder_name" ]; then
-        echo "✅ Sudah berada di dalam folder '$folder_name'."
+        echo "✅ Sudah berada di dalam folder '$folder_name'." 
     elif [ ! -d "$folder_name" ]; then
         echo "📂 Folder '$folder_name' tidak ditemukan. Membuat folder..."
         mkdir -p "$folder_name"
@@ -22,61 +22,35 @@ check_and_create_folder() {
     cd "$folder_name" || { echo "❌ Gagal berpindah ke folder $folder_name"; exit 1; }
 }
 
-# Fungsi untuk mendapatkan versi terbaru dari GitHub
-get_latest_version() {
-    curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | \
-    grep -Po '"tag_name": "\K.*?(?=")'
-}
-
 # Setup folder kerja
 check_and_create_folder "t3rn"
 
-# Cek versi terbaru dari executor
-echo "🔎 Mengecek versi terbaru dari GitHub..."
-LATEST_VERSION=$(get_latest_version)
+# Dapatkan versi terbaru dari GitHub
+LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | \
+grep -Po '"tag_name": "\K.*?(?=")')
+
 echo "🔄 Versi terbaru: $LATEST_VERSION"
 
-# Cek apakah sudah ada versi sebelumnya
-if [ -f "executor_version.txt" ]; then
-    OLD_VERSION=$(cat executor_version.txt)
-else
-    OLD_VERSION=""
-fi
+# Unduh file dari GitHub menggunakan wget
+EXECUTOR_FILE="executor-linux-${LATEST_VERSION}.tar.gz"
+echo "🆕 Mengunduh file executor versi ${LATEST_VERSION}..."
+wget "https://github.com/t3rn/executor-release/releases/download/${LATEST_VERSION}/${EXECUTOR_FILE}"
 
-# Jika versi berbeda, lakukan update
-if [ "$LATEST_VERSION" != "$OLD_VERSION" ]; then
-    echo "🆕 Versi baru tersedia! Mengunduh executor versi $LATEST_VERSION..."
-    EXECUTOR_FILE="executor-linux-$LATEST_VERSION.tar.gz"
+# Ekstrak file
+echo "📦 Mengekstrak file executor..."
+tar -xzf "$EXECUTOR_FILE"
 
-    # Unduh versi terbaru
-    wget -q "https://github.com/t3rn/executor-release/releases/download/$LATEST_VERSION/$EXECUTOR_FILE"
-
-    # Hapus versi lama
-    echo "🗑 Menghapus executor lama..."
-    rm -rf executor executor-linux-*.tar.gz
-
-    # Ekstrak file
-    echo "📦 Mengekstrak executor..."
-    tar -xzf "$EXECUTOR_FILE"
-
-    # Simpan versi terbaru
-    echo "$LATEST_VERSION" > executor_version.txt
-else
-    echo "✅ Executor sudah versi terbaru ($LATEST_VERSION)."
-fi
+# Menghapus file tar setelah ekstraksi
+rm -f "$EXECUTOR_FILE"
 
 # Masuk ke direktori binary executor
 cd executor/executor/bin || { echo "❌ Gagal masuk ke direktori executor"; exit 1; }
 
 # Konfigurasi interaktif
 echo "⚙️  Konfigurasi Executor"
-
 ENVIRONMENT=$(ask_with_default "Masukkan ENVIRONMENT" "testnet")
 LOG_LEVEL=$(ask_with_default "Masukkan LOG_LEVEL" "debug")
 LOG_PRETTY=$(ask_with_default "LOG_PRETTY" "false")
-# EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=$(ask_with_default "EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API" "false")
-# EXECUTOR_PROCESS_ORDERS_API_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_ORDERS_API_ENABLED" "false")
-# EXECUTOR_ENABLE_BATCH_BIDING=$(ask_with_default "EXECUTOR_ENABLE_BATCH_BIDING" "true")
 EXECUTOR_PROCESS_ORDERS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_ORDERS_ENABLED" "true")
 EXECUTOR_PROCESS_CLAIMS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_CLAIMS_ENABLED" "true")
 EXECUTOR_PROCESS_BIDS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_BIDS_ENABLED" "true")
@@ -107,9 +81,6 @@ EOF
 export ENVIRONMENT
 export LOG_LEVEL
 export LOG_PRETTY
-# export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API
-# export EXECUTOR_PROCESS_ORDERS_API_ENABLED
-# export EXECUTOR_ENABLE_BATCH_BIDING
 export EXECUTOR_PROCESS_BIDS_ENABLED
 export EXECUTOR_PROCESS_ORDERS_ENABLED
 export EXECUTOR_PROCESS_CLAIMS_ENABLED
