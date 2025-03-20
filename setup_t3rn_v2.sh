@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Fungsi untuk meminta input dengan nilai default
 ask_with_default() {
     local prompt="$1"
     local default_value="$2"
@@ -8,94 +7,137 @@ ask_with_default() {
     echo "${input:-$default_value}"
 }
 
-# Cek dan buat folder jika belum ada
 check_and_create_folder() {
     local folder_name="$1"
     if [ "$(basename "$PWD")" = "$folder_name" ]; then
-        echo "✅ Sudah berada di dalam folder '$folder_name'." 
+        echo "✅ Already in folder '$folder_name'."
     elif [ ! -d "$folder_name" ]; then
-        echo "📂 Folder '$folder_name' tidak ditemukan. Membuat folder..."
+        echo "📂 Folder '$folder_name' not found. Creating folder..."
         mkdir -p "$folder_name"
     else
-        echo "📂 Folder '$folder_name' sudah ada."
+        echo "📂 Folder '$folder_name' already exists."
     fi
-    cd "$folder_name" || { echo "❌ Gagal berpindah ke folder $folder_name"; exit 1; }
+    cd "$folder_name" || { echo "❌ Failed to switch to folder $folder_name"; exit 1; }
 }
 
-# Setup folder kerja
 check_and_create_folder "t3rn"
 
-# Dapatkan versi terbaru dari GitHub
-LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | \
-grep -Po '"tag_name": "\K.*?(?=")')
+echo "🔍 Fetching version list from GitHub..."
+VERSIONS=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases | \
+grep -Po '"tag_name": "\K.*?(?=")' | head -n 5)
 
-echo "🔄 Versi terbaru: $LATEST_VERSION"
+echo "📋 Available versions:"
+i=1
+echo "$VERSIONS" | while read -r version; do
+    echo "  $i. $version"
+    ((i++))
+done
 
-# Unduh file dari GitHub menggunakan wget
-EXECUTOR_FILE="executor-linux-${LATEST_VERSION}.tar.gz"
-echo "🆕 Mengunduh file executor versi ${LATEST_VERSION}..."
-wget "https://github.com/t3rn/executor-release/releases/download/${LATEST_VERSION}/${EXECUTOR_FILE}"
+while true; do
+    read -p "Choose version number (1-5) [1]: " VERSION_CHOICE
+    VERSION_CHOICE=${VERSION_CHOICE:-1}
+    if [[ "$VERSION_CHOICE" =~ ^[1-5]$ ]]; then
+        break
+    else
+        echo "❌ Invalid choice. Enter a number between 1-5."
+    fi
+done
 
-# Ekstrak file
-echo "📦 Mengekstrak file executor..."
+SELECTED_VERSION=$(echo "$VERSIONS" | sed -n "${VERSION_CHOICE}p")
+echo "🔄 Selected version: $SELECTED_VERSION"
+
+EXECUTOR_FILE="executor-linux-${SELECTED_VERSION}.tar.gz"
+echo "🆕 Downloading executor file version ${SELECTED_VERSION}..."
+wget "https://github.com/t3rn/executor-release/releases/download/${SELECTED_VERSION}/${EXECUTOR_FILE}"
+
+echo "📦 Extracting executor file..."
 tar -xzf "$EXECUTOR_FILE"
 
-# Menghapus file tar setelah ekstraksi
 rm -f "$EXECUTOR_FILE"
 
-# Masuk ke direktori binary executor
-cd executor/executor/bin || { echo "❌ Gagal masuk ke direktori executor"; exit 1; }
+cd executor/executor/bin || { echo "❌ Failed to enter executor directory"; exit 1; }
 
-# Konfigurasi interaktif
-echo "⚙️  Konfigurasi Executor"
-ENVIRONMENT=$(ask_with_default "Masukkan ENVIRONMENT" "testnet")
-LOG_LEVEL=$(ask_with_default "Masukkan LOG_LEVEL" "debug")
-LOG_PRETTY=$(ask_with_default "LOG_PRETTY" "false")
-EXECUTOR_PROCESS_ORDERS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_ORDERS_ENABLED" "true")
-EXECUTOR_PROCESS_CLAIMS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_CLAIMS_ENABLED" "true")
-EXECUTOR_PROCESS_BIDS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_BIDS_ENABLED" "true")
-EXECUTOR_MAX_L3_GAS_PRICE=$(ask_with_default "Masukkan EXECUTOR_MAX_L3_GAS_PRICE" "100")
-PRIVATE_KEY_LOCAL=$(ask_with_default "Masukkan PRIVATE_KEY_LOCAL" "")
-ENABLED_NETWORKS=$(ask_with_default "Masukkan ENABLED_NETWORKS" "arbitrum-sepolia,base-sepolia,optimism-sepolia,l2rn")
+configure_environment() {
+    echo "⚙️  Executor Configuration"
+    ENVIRONMENT=$(ask_with_default "Enter ENVIRONMENT" "testnet")
+    LOG_LEVEL=$(ask_with_default "Enter LOG_LEVEL" "debug")
+    LOG_PRETTY=$(ask_with_default "LOG_PRETTY" "false")
+    EXECUTOR_PROCESS_ORDERS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_ORDERS_ENABLED" "true")
+    EXECUTOR_PROCESS_CLAIMS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_CLAIMS_ENABLED" "true")
+    EXECUTOR_PROCESS_BIDS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_BIDS_ENABLED" "true")
+    EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=$(ask_with_default "EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API" "false")
+    EXECUTOR_PROCESS_ORDERS_API_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_ORDERS_API_ENABLED" "false")
+    EXECUTOR_MAX_L3_GAS_PRICE=$(ask_with_default "Enter EXECUTOR_MAX_L3_GAS_PRICE" "100")
+    PRIVATE_KEY_LOCAL=$(ask_with_default "Enter PRIVATE_KEY_LOCAL" "")
+    ENABLED_NETWORKS=$(ask_with_default "Enter ENABLED_NETWORKS" "arbitrum-sepolia,base-sepolia,blast-sepolia,optimism-sepolia,unichain-sepolia,l2rn")
+    
+    APIKEY_ALCHEMY=$(ask_with_default "Enter Alchemy API Key (leave blank if none)" "")
 
-# Konfigurasi RPC_ENDPOINTS
-RPC_ENDPOINTS_L2RN=$(ask_with_default "Masukkan RPC_ENDPOINTS_L2RN" "https://b2n.rpc.caldera.xyz/http")
-RPC_ENDPOINTS_ARBT=$(ask_with_default "Masukkan RPC_ENDPOINTS_ARBT" "https://arbitrum-sepolia.drpc.org,https://sepolia-rollup.arbitrum.io/rpc")
-RPC_ENDPOINTS_BAST=$(ask_with_default "Masukkan RPC_ENDPOINTS_BAST" "https://base-sepolia-rpc.publicnode.com,https://base-sepolia.drpc.org")
-RPC_ENDPOINTS_OPST=$(ask_with_default "Masukkan RPC_ENDPOINTS_OPST" "https://sepolia.optimism.io,https://optimism-sepolia.drpc.org")
-RPC_ENDPOINTS_UNIT=$(ask_with_default "Masukkan RPC_ENDPOINTS_UNIT" "https://unichain-sepolia.drpc.org,https://sepolia.unichain.org")
+    RPC_ENDPOINTS_L2RN="https://b2n.rpc.caldera.xyz/http"
+    
+    if [ -n "$APIKEY_ALCHEMY" ]; then
+        RPC_ENDPOINTS_ARBT="https://arbitrum-sepolia.drpc.org,https://arb-sepolia.g.alchemy.com/v2/$APIKEY_ALCHEMY"
+        RPC_ENDPOINTS_BAST="https://base-sepolia-rpc.publicnode.com,https://base-sepolia.g.alchemy.com/v2/$APIKEY_ALCHEMY"
+        RPC_ENDPOINTS_BLST="https://sepolia.blast.io,https://blast-sepolia.g.alchemy.com/v2/$APIKEY_ALCHEMY"
+        RPC_ENDPOINTS_OPST="https://sepolia.optimism.io,https://opt-sepolia.g.alchemy.com/v2/$APIKEY_ALCHEMY"
+        RPC_ENDPOINTS_UNIT="https://unichain-sepolia.drpc.org,https://unichain-sepolia.g.alchemy.com/v2/$APIKEY_ALCHEMY"
+    else
+        RPC_ENDPOINTS_ARBT=$(ask_with_default "Enter RPC_ENDPOINTS_ARBT" "https://arbitrum-sepolia.drpc.org")
+        RPC_ENDPOINTS_BAST=$(ask_with_default "Enter RPC_ENDPOINTS_BAST" "https://base-sepolia-rpc.publicnode.com")
+        RPC_ENDPOINTS_BLST=$(ask_with_default "Enter RPC_ENDPOINTS_BLST" "https://sepolia.blast.io")
+        RPC_ENDPOINTS_OPST=$(ask_with_default "Enter RPC_ENDPOINTS_OPST" "https://sepolia.optimism.io")
+        RPC_ENDPOINTS_UNIT=$(ask_with_default "Enter RPC_ENDPOINTS_UNIT" "https://unichain-sepolia.drpc.org")
+    fi
 
-# Format ulang sebagai JSON
-RPC_ENDPOINTS_JSON=$(cat <<EOF
+    RPC_ENDPOINTS_JSON=$(cat <<EOF
 {
     "l2rn": ["$RPC_ENDPOINTS_L2RN"],
     "arbt": ["$(echo $RPC_ENDPOINTS_ARBT | sed 's/,/", "/g')"],
     "bast": ["$(echo $RPC_ENDPOINTS_BAST | sed 's/,/", "/g')"],
+    "blst": ["$(echo $RPC_ENDPOINTS_BLST | sed 's/,/", "/g')"],
     "opst": ["$(echo $RPC_ENDPOINTS_OPST | sed 's/,/", "/g')"],
     "unit": ["$(echo $RPC_ENDPOINTS_UNIT | sed 's/,/", "/g')"]
 }
 EOF
 )
+}
 
-# Set environment variable
-export ENVIRONMENT
-export LOG_LEVEL
-export LOG_PRETTY
-export EXECUTOR_PROCESS_BIDS_ENABLED
-export EXECUTOR_PROCESS_ORDERS_ENABLED
-export EXECUTOR_PROCESS_CLAIMS_ENABLED
-export EXECUTOR_MAX_L3_GAS_PRICE
-export PRIVATE_KEY_LOCAL
-export ENABLED_NETWORKS
-export RPC_ENDPOINTS="$RPC_ENDPOINTS_JSON"
+while true; do
+    configure_environment
 
-echo "✅ Variabel lingkungan telah diatur:"
-printenv | grep -E 'ENVIRONMENT|LOG_LEVEL|LOG_PRETTY|EXECUTOR|PRIVATE_KEY_LOCAL|ENABLED_NETWORKS|RPC_ENDPOINTS'
+    export ENVIRONMENT
+    export LOG_LEVEL
+    export LOG_PRETTY
+    export EXECUTOR_PROCESS_BIDS_ENABLED
+    export EXECUTOR_PROCESS_ORDERS_ENABLED
+    export EXECUTOR_PROCESS_CLAIMS_ENABLED
+    export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API
+    export EXECUTOR_PROCESS_ORDERS_API_ENABLED
+    export EXECUTOR_MAX_L3_GAS_PRICE
+    export PRIVATE_KEY_LOCAL
+    export ENABLED_NETWORKS
+    export RPC_ENDPOINTS="$RPC_ENDPOINTS_JSON"
 
-# Menjalankan executor
-echo "🚀 Menjalankan executor..."
+    echo "✅ Environment variables to be set:"
+    printenv | grep -E 'ENVIRONMENT|LOG_LEVEL|LOG_PRETTY|EXECUTOR|PRIVATE_KEY_LOCAL|ENABLED_NETWORKS|RPC_ENDPOINTS'
+
+    while true; do
+        read -p "Is the configuration correct? (y/n) [y]: " CONFIRM
+        CONFIRM=${CONFIRM:-y}
+        if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+            break 2
+        elif [[ "$CONFIRM" =~ ^[Nn]$ ]]; then
+            echo "🔄 Repeating configuration..."
+            break
+        else
+            echo "❌ Enter 'y' for yes or 'n' for no."
+        fi
+    done
+done
+
+echo "🚀 Running executor..."
 if [ -x "./executor" ]; then
     ./executor
 else
-    echo "❌ Error: Tidak dapat menemukan atau menjalankan executor. Pastikan direktori benar."
+    echo "❌ Error: Cannot find or run executor. Ensure the directory is correct."
 fi
