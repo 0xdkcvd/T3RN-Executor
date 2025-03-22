@@ -48,7 +48,7 @@ echo "🔄 Selected version: $SELECTED_VERSION"
 
 EXECUTOR_FILE="executor-linux-${SELECTED_VERSION}.tar.gz"
 echo "🆕 Downloading executor file version ${SELECTED_VERSION}..."
-wget "https://github.com/t3rn/executor-release/releases/download/${SELECTED_VERSION}/${EXECUTOR_FILE}" --show-progress
+wget -q "https://github.com/t3rn/executor-release/releases/download/${SELECTED_VERSION}/${EXECUTOR_FILE}" --show-progress
 
 echo "📦 Extracting executor file..."
 tar -xzf "$EXECUTOR_FILE"
