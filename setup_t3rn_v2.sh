@@ -51,14 +51,14 @@ echo "🆕 Downloading executor file version ${SELECTED_VERSION}..."
 wget -q "https://github.com/t3rn/executor-release/releases/download/${SELECTED_VERSION}/${EXECUTOR_FILE}" --show-progress
 
 echo "📦 Extracting executor file..."
-tar -xzf "$EXECUTOR_FILE"
+tar -xzf "$EXECUTOR_FILE" --totals
 
 rm -f "$EXECUTOR_FILE"
 
 cd executor/executor/bin || { echo "❌ Failed to enter executor directory"; exit 1; }
 
 configure_environment() {
-    echo "⚙️  Executor Configuration"
+    echo "⚙️  Executor Configuration (leave blank for default)"
     ENVIRONMENT=$(ask_with_default "Enter ENVIRONMENT" "testnet")
     LOG_LEVEL=$(ask_with_default "Enter LOG_LEVEL" "debug")
     LOG_PRETTY=$(ask_with_default "LOG_PRETTY" "false")
