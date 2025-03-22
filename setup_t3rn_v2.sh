@@ -48,7 +48,7 @@ echo "🔄 Selected version: $SELECTED_VERSION"
 
 EXECUTOR_FILE="executor-linux-${SELECTED_VERSION}.tar.gz"
 echo "🆕 Downloading executor file version ${SELECTED_VERSION}..."
-wget "https://github.com/t3rn/executor-release/releases/download/${SELECTED_VERSION}/${EXECUTOR_FILE}"
+wget "https://github.com/t3rn/executor-release/releases/download/${SELECTED_VERSION}/${EXECUTOR_FILE}" --show-progress
 
 echo "📦 Extracting executor file..."
 tar -xzf "$EXECUTOR_FILE"
@@ -65,6 +65,7 @@ configure_environment() {
     EXECUTOR_PROCESS_ORDERS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_ORDERS_ENABLED" "true")
     EXECUTOR_PROCESS_CLAIMS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_CLAIMS_ENABLED" "true")
     EXECUTOR_PROCESS_BIDS_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_BIDS_ENABLED" "true")
+    EXECUTOR_ENABLE_BATCH_BIDING=$(ask_with_default "EXECUTOR_PROCESS_BIDS_ENABLED" "true")
     EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=$(ask_with_default "EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API" "false")
     EXECUTOR_PROCESS_ORDERS_API_ENABLED=$(ask_with_default "EXECUTOR_PROCESS_ORDERS_API_ENABLED" "false")
     EXECUTOR_MAX_L3_GAS_PRICE=$(ask_with_default "Enter EXECUTOR_MAX_L3_GAS_PRICE" "100")
@@ -74,7 +75,7 @@ configure_environment() {
     APIKEY_ALCHEMY=$(ask_with_default "Enter Alchemy API Key (leave blank if none)" "")
 
     RPC_ENDPOINTS_L2RN="https://b2n.rpc.caldera.xyz/http"
-    
+   
     if [ -n "$APIKEY_ALCHEMY" ]; then
         RPC_ENDPOINTS_ARBT="https://arbitrum-sepolia.drpc.org,https://arb-sepolia.g.alchemy.com/v2/$APIKEY_ALCHEMY"
         RPC_ENDPOINTS_BAST="https://base-sepolia-rpc.publicnode.com,https://base-sepolia.g.alchemy.com/v2/$APIKEY_ALCHEMY"
@@ -109,6 +110,7 @@ while true; do
     export LOG_LEVEL
     export LOG_PRETTY
     export EXECUTOR_PROCESS_BIDS_ENABLED
+    export EXECUTOR_ENABLE_BATCH_BIDING
     export EXECUTOR_PROCESS_ORDERS_ENABLED
     export EXECUTOR_PROCESS_CLAIMS_ENABLED
     export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API
